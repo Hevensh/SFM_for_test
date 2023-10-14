@@ -44,8 +44,8 @@ class SFMcell(layers.Layer):
         h_next = o_i * c_t
         return h_next, S_next
 
-
-class SFM(layers.Layer):
+    
+class SFM(Model):
     def __init__(
             self, 
             num_states=8, 
@@ -65,7 +65,7 @@ class SFM(layers.Layer):
             c = inputs.shape[-1]
             return inputs @ tf.zeros([c, self.num_states])
         else:
-            b = inputs.shape[0]
+            b = tf.shape(inputs)[0]
             
             x = tf.unstack(inputs, axis=1)
             h_0 = tf.tile(self.h_0, [b, 1])
