@@ -24,8 +24,8 @@ class SFMcell(layers.Layer):
         
     def call(self, x_i, h_i, S_i, t):
         omega_t = tf.cast(tf.stack([
-            np.sin(np.arange(self.num_freq) * t % self.num_freq / (self.num_freq / np.pi / 2.)),
-            np.cos(np.arange(self.num_freq) * t % self.num_freq / (self.num_freq / np.pi / 2.)),
+            np.sin(np.arange(self.num_freq) * t % self.num_freq / (self.num_freq / np.pi)),
+            np.cos(np.arange(self.num_freq) * t % self.num_freq / (self.num_freq / np.pi)),
         ])[:, None], tf.float32)
         
         x_h = tf.concat([x_i, h_i], -1)
