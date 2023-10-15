@@ -10,23 +10,24 @@ class SFMcell(layers.Layer):
             num_freq=16,
     ):
         super(SFMcell, self).__init__()
+        self.num_freq = num_freq
         self.f_ste = layers.Dense(num_states, activation='sigmoid')
         self.f_freq = layers.Dense(num_freq, activation='sigmoid')
         self.i_dot = layers.Dense(num_states, activation='sigmoid')
         self.c_wave = layers.Dense(num_states, activation='tanh')
-        
-        self.omega_t = tf.cast(tf.stack([
-            np.sin(np.arange(num_freq) / (num_freq / np.pi / 2.)),
-            np.cos(np.arange(num_freq) / (num_freq / np.pi / 2.)),
-        ])[:, None], tf.float32)
-        
+                
         self.u_a = self.add_weight('u_a', [num_freq])
         self.b_a = self.add_weight('b_a', [num_states])
         self.plus = layers.Add()
         
         self.o_i = layers.Dense(num_states, activation='sigmoid')
         
-    def call(self, x_i, h_i, S_i):
+    def call(self, x_i, h_i, S_i, t):
+        omega_t = tf.cast(tf.stack([
+            np.sin(np.arange(self.num_freq) * t % self.num_freq / (num_freq / np.pi / 2.)),
+            np.cos(np.arange(self.num_freq) * t % self.num_freq / (num_freq / np.pi / 2.)),
+        ])[:, None], tf.float32)
+        
         x_h = tf.concat([x_i, h_i], -1)
         f_ste = self.f_ste(x_h)
         f_freq = self.f_freq(x_h)
@@ -34,7 +35,7 @@ class SFMcell(layers.Layer):
         
         i_dot = self.i_dot(x_h)
         c_wave = self.c_wave(x_h)
-        i_c_omega = (i_dot * c_wave)[:, None, :, None] * self.omega_t
+        i_c_omega = (i_dot * c_wave)[:, None, :, None] * omega_t
         
         S_next = S_i * F_t[:, None] + i_c_omega
         
@@ -74,6 +75,6 @@ class SFM(Model):
             h = [h_0] + [None] * t
             
             for i, x_i in enumerate(x):
-                h[i + 1], S_i = self.SFMcell(x_i, h[i], S_i)
+                h[i + 1], S_i = self.SFMcell(x_i, h[i], S_i, i)
                 
             return tf.stack(h[1:], 1)
